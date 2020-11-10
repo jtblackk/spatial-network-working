@@ -37,7 +37,8 @@ public class ClientController : MonoBehaviour
    public IEnumerator createSocket() {
        // if there's already an active socket, send an error message
        if(this.activeSocketState != state.Closed) {
-           Debug.Log("CLIENT: \"ERROR: A socket is already in use. No need to create another one on this module.\"");
+            Instructions.screen.text = "CLIENT ERROR: A socket is already in use. No need to create another one on this module.";
+            Debug.Log("CLIENT: \"ERROR: A socket is already in use. No need to create another one on this module.\"");
            yield break;
        }
        
@@ -45,6 +46,7 @@ public class ClientController : MonoBehaviour
         // ask user which type of socket to create (TCP or UDP)
         string numpadInput;
         do {
+            Instructions.screen.text = "CLIENT: Choose a socket type: (1) UDP (2) TCP";
             Debug.Log("CLIENT: \"Choose a socket type: (1) UDP (2) TCP\"");
 
             // clear the numpad buffer
@@ -73,9 +75,10 @@ public class ClientController : MonoBehaviour
             this.activeSocketObject.transform.Find("TCP Socket").gameObject.SetActive(true);
         }
         this.activeSocketState = state.Created;
-        
+
 
         // present creation feedback
+        Instructions.screen.text = "CLIENT: createSocket() created a new " + this.activeSocketType + " socket";
         Debug.Log("CLIENT: \"createSocket() created a new " + this.activeSocketType + " socket\"");
 
    }
@@ -84,9 +87,11 @@ public class ClientController : MonoBehaviour
         // check that a socket has been created but hasn't been bound
         if(this.activeSocketState != state.Created) {
             if(this.activeSocketState == state.Bound) {
+                Instructions.screen.text = "CLIENT ERROR: already bound a port on the module";
                 Debug.Log("CLIENT: \"ERROR: already bound a port on the module\"");
                 yield break;
             }
+            Instructions.screen.text = "CLIENT ERROR: must create a socket before binding it";
             Debug.Log("CLIENT: \"ERROR: must create a socket before binding it\"");
             yield break;
         }
@@ -94,6 +99,7 @@ public class ClientController : MonoBehaviour
         // ask user to select a port to bind to
         string numpadInput;
         do {
+            Instructions.screen.text = "CLIENT: Enter a port to bind to (1-4)";
             Debug.Log("CLIENT: \"Enter a port to bind to (1-4)\"");
 
             
@@ -125,6 +131,7 @@ public class ClientController : MonoBehaviour
         }
 
         // present bind feedback        
+        Instructions.screen.text = "CLIENT: bindSocket() bound the client socket to port " + this.activePort;
         Debug.Log("CLIENT: \"bindSocket() bound the client socket to port " + this.activePort + "\"");
     }
 
@@ -132,6 +139,7 @@ public class ClientController : MonoBehaviour
     {   
         // check that there's a socket to close
         if(this.activeSocketState == state.Closed) {
+            Instructions.screen.text = "CLIENT ERROR: called close without any sockets opened";
             Debug.Log("CLIENT: \"ERROR: called close without any sockets opened\"");
             yield break;
         }
@@ -157,9 +165,10 @@ public class ClientController : MonoBehaviour
         
         // d. hide socket
         this.activeSocketObject.transform.Find("UDP Socket").gameObject.SetActive(false);
-        this.activeSocketObject.transform.Find("TCP Socket").gameObject.SetActive(false);        
-    
+        this.activeSocketObject.transform.Find("TCP Socket").gameObject.SetActive(false);
+
         // return socket tube to original position
+        Instructions.screen.text = "CLIENT: closeSocket() closed client socket on port " + closedPort;
         Debug.Log("CLIENT: \"closeSocket() closed client socket on port " + closedPort + "\"");
 
     }
@@ -192,6 +201,7 @@ public class ClientController : MonoBehaviour
             this.bufferReadyToRead = false;
             this.numpadBuffer += key;
         }
+        Instructions.screen.text = "CLIENT: numpad() " + key;
         Debug.Log("CLIENT: \"numpad() " + key + "\"");
     }
 
@@ -214,8 +224,8 @@ public class ClientController : MonoBehaviour
         switch (input)
         {
             case 1:
-                start = GameObject.Find("Client Area/Client Ports/Socket 1").transform.position;
-                target = GameObject.Find("Server Area/Server Ports/Socket 1").transform.position;
+                start = GameObject.Find("Client Area/Client Ports/CSocket").transform.position;
+                target = GameObject.Find("Server Area/Server Ports/SSocket").transform.position;
                 break;
 
         }
@@ -230,7 +240,8 @@ public class ClientController : MonoBehaviour
 
         p.transform.localScale = scaleChange;
         p.transform.Rotate(0f, 0f, 90f, Space.Self);
-   
+
+        Instructions.screen.text = "Sending data...";
         Debug.Log("CLIENT: \"sendData stub\"");
     }
     
