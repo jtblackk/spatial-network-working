@@ -3,12 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Random=UnityEngine.Random;
 
 
 public class ClientController : MonoBehaviour
 {   
     public enum socketType {None, TCP, UDP};
     public socketType activeSocketType;
+
+    public ServerController server;
 
     public int activePort;
     private Vector3 originalSocketPos;
@@ -26,6 +29,8 @@ public class ClientController : MonoBehaviour
     private float speed = 0.5f;
     private int input;
     private GameObject p;
+
+    bool autoSendToggled;
     
 
     public void Start() {
@@ -39,7 +44,7 @@ public class ClientController : MonoBehaviour
        if(this.activeSocketState != state.Closed) {
             ClientInstructions.screen.text = "CLIENT ERROR: A socket is already in use. No need to create another one on this module.";
             Debug.Log("CLIENT: \"ERROR: A socket is already in use. No need to create another one on this module.\"");
-           yield break;
+            yield break;
        }
        
         
@@ -216,6 +221,9 @@ public class ClientController : MonoBehaviour
         Debug.Log("CLIENT: \"connectToServer stub\"");
     }
 
+    // TODO:
+    // Might want to rename function to createPacket, split up into assigning data to packet
+    // and creation and travel of the packet object itself.
     public void sendData()
     {
         // Decides which socket, or path
@@ -231,9 +239,10 @@ public class ClientController : MonoBehaviour
         }
 
         p = Instantiate(this.packet, start, Quaternion.identity);
-        p.name = "tcp_model";
-        p = GameObject.Find("tcp_model");
+        //p.name = "tcp_model";
+        //p = GameObject.Find("tcp_model");
 
+        // TODO: Destroy based on colliding with the destination, not on time.
         Destroy(p, 12);
 
         Vector3 scaleChange = new Vector3(75f, 75f, 75f);
@@ -244,21 +253,34 @@ public class ClientController : MonoBehaviour
         ClientInstructions.screen.text = "Sending data...";
         Debug.Log("CLIENT: \"sendData stub\"");
     }
+
+    public void sendPacket() {
+        if (p != null) {
+            p.GetComponent<UDPInfo>().payload = (char)('A' + Random.Range (0,26));
+            if (this.activePort == 0) p.GetComponent<Rigidbody>().useGravity = true;
+            else p.transform.position = Vector3.MoveTowards(p.transform.position, target, Time.deltaTime * speed);
+        }
+    }
     
     private void Update()
     {
-        if (p != null)
-        {
-            p.transform.position = Vector3.MoveTowards(p.transform.position, target, Time.deltaTime * speed);
-        }
+        sendPacket();
     }
 
     public void toggleAutoSend()
     {
+        autoSendToggled = !autoSendToggled;
+        StartCoroutine(autoSend());
         Debug.Log("CLIENT: \"toggleAutoSend stub\"");
     }
 
-
+    public IEnumerator autoSend() {
+        while (autoSendToggled) {
+            sendData();
+            sendPacket();
+            yield return new WaitForSeconds(13);
+        }
+    }
 
     // server functions
     public void listenForConnection()
