@@ -22,6 +22,7 @@ public class DesktopThrowable : MonoBehaviour
     void Update()
     {
         if (!held) {
+            
             if (GameObject.FindWithTag("Player").activeSelf) {
                 player = GameObject.FindWithTag("Player");
                 if (Input.GetMouseButtonDown(0) && !held) {
@@ -38,6 +39,7 @@ public class DesktopThrowable : MonoBehaviour
             }
         }
         else {
+            packetObject.GetComponent<UDPInfo>().showPanel();
             holdObject(packetObject, player);
         }
     }
@@ -46,8 +48,10 @@ public class DesktopThrowable : MonoBehaviour
         playerPos = player.transform.position + player.transform.forward*2.0f;
         if (Input.GetMouseButton(0)) {
             heldObject.transform.position = new Vector3(playerPos.x, playerPos.y, playerPos.z);
+            heldObject.transform.rotation = Quaternion.Euler(0f, 1f, 0f);
         }
         else {
+            heldObject.GetComponent<UDPInfo>().hidePanel();
             heldObject.GetComponent<Rigidbody>().useGravity = true;
             held = !held;
         }

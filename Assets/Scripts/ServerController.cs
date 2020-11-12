@@ -22,7 +22,12 @@ public class ServerController : MonoBehaviour
     public string numpadBuffer;
     public bool bufferReadyToRead;
 
+    public List<char> dataReceived = new List<char>();
+
     public GameObject serverArea;
+
+    public bool autoReceiveToggled;
+    public bool screenBlanked;
 
     public void Start() {
         this.originalSocketPos = this.activeSocketObject.transform.localPosition;
@@ -219,8 +224,6 @@ public class ServerController : MonoBehaviour
         Debug.Log("SERVER: \"ERROR: The server does not need to send data\"");
     }
 
-
-
     // server functions
     public void listenForConnection()
     {
@@ -234,13 +237,47 @@ public class ServerController : MonoBehaviour
 
     public void receiveData()
     {
+        int tail = dataReceived.Count;
+
+        if (ServerInstructions.screen.text != "" && !screenBlanked) {
+            ServerInstructions.screen.text = "";
+            screenBlanked = true;
+        }
+        if (tail.Equals(0)) {
+            ServerInstructions.screen.text = "No data to receive";
+        }
+        else {
+            ServerInstructions.screen.text += dataReceived[tail-1];
+            //dataReceived.Remove(dataReceived[tail-1]);
+        }
+        
         Debug.Log("SERVER: \"receiveData stub\"");
     }
 
     public void toggleAutoReceive()
     {
         Debug.Log("SERVER: \"toggleAutoReceive stub\"");
+        autoReceiveToggled = !autoReceiveToggled;
+        StartCoroutine(autoReceive());
     }
 
-    
+    public IEnumerator autoReceive() {
+        while (autoReceiveToggled) {
+            int tail = dataReceived.Count;
+
+            if (ServerInstructions.screen.text != "" && !screenBlanked) {
+                ServerInstructions.screen.text = "";
+                screenBlanked = true;
+                yield return null;
+            }
+            if (!tail.Equals(0)) {
+                ServerInstructions.screen.text += dataReceived[tail-1];
+                //dataReceived.Remove(dataReceived[tail-1]);
+                yield return null;
+            }
+            yield return new WaitForSeconds(1.0f);
+        }
+        screenBlanked = false;
+        yield return null;
+    }
 }

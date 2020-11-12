@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Random=UnityEngine.Random;
 
-
 public class ClientController : MonoBehaviour
 {   
     public enum socketType {None, TCP, UDP};
@@ -31,10 +30,12 @@ public class ClientController : MonoBehaviour
     private GameObject p;
 
     bool autoSendToggled;
+    bool payloadIndexed;
     
 
     public void Start() {
         this.originalSocketPos = this.activeSocketObject.transform.localPosition;
+        server = GameObject.FindWithTag("Server").GetComponent<ServerController>();
     }
 
     // shared functions
@@ -235,10 +236,12 @@ public class ClientController : MonoBehaviour
                 start = GameObject.Find("Client Area/Client Ports/CSocket").transform.position;
                 target = GameObject.Find("Server Area/Server Ports/SSocket").transform.position;
                 break;
-
         }
 
         p = Instantiate(this.packet, start, Quaternion.identity);
+        p.GetComponent<UDPInfo>().payload = (char)('A' + Random.Range (0,26));
+        p.GetComponent<UDPInfo>().port = activePort;
+        p.GetComponent<UDPInfo>().destination = "192.168.0.2";
         //p.name = "tcp_model";
         //p = GameObject.Find("tcp_model");
 
@@ -255,10 +258,29 @@ public class ClientController : MonoBehaviour
     }
 
     public void sendPacket() {
+        // TODO: use System.Linq to get the actual tail of the list so the payload is not
+        // added repeatedly.
         if (p != null) {
-            p.GetComponent<UDPInfo>().payload = (char)('A' + Random.Range (0,26));
+            char payload = p.GetComponent<UDPInfo>().payload;
+            int tail = server.dataReceived.Count;
+
             if (this.activePort == 0) p.GetComponent<Rigidbody>().useGravity = true;
-            else p.transform.position = Vector3.MoveTowards(p.transform.position, target, Time.deltaTime * speed);
+            p.transform.position = Vector3.MoveTowards(p.transform.position, target, Time.deltaTime * speed);
+            if (p.GetComponent<PacketCollider>().received) {
+                // TODO: lots of conditionals to check each frame,
+                // definitely a better way to insert once while collisions occur,
+                // likely from the PacketCollider script.
+                if (tail.Equals(0)) {
+                    Debug.Log("Adding payload to server");
+                    server.dataReceived.Add(payload);
+                }
+                else {
+                    if (server.dataReceived[tail-1] != payload) {
+                        Debug.Log("Adding payload to server");
+                        server.dataReceived.Add(payload);
+                    }
+                }
+            }
         }
     }
     
